@@ -84,6 +84,7 @@ function App() {
     const [constellations, setConstellations] = useState([]);
     const [selectedConstellation, setSelectedConstellation] = useState(null);
 
+    const [matchData, setMatchData] = useState(null);
     const getLocation = () => {
         if (navigator.geolocation) {
             navigator.permissions
@@ -135,7 +136,7 @@ function App() {
             body: formData,
         })
             .then((response) => response.json())
-            .then((data) => console.log(data))
+            .then((data) => setMatchData(data))
             .catch((error) => console.error("Error:", error));
     }
 
