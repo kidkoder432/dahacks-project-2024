@@ -2,7 +2,6 @@
 import dateutil.parser
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from numpy import VisibleDeprecationWarning
 from skyfield.api import load, N, W, wgs84, Star, Angle
 
 import pandas as pd
@@ -48,14 +47,15 @@ def receive_visible():
     lng = data.get("lng")
     timestamp = data.get("timestamp")  # Retrieve the timestamp (UTC)
 
-    ts = load.timescale().utc(dateutil.parser.parse(timestamp))
+    ts = load.timescale()
+    t = ts.utc(dateutil.parser.parse(timestamp))
     loc = wgs84.latlon(lat * N, lng * W)
 
     visibleConstellations = []
     print(f"Received coordinates: Latitude={lat}, Longitude={lng}, Time={timestamp}")
 
     for star in stars:
-        starPos = loc.at(ts).observe(get_star(star["ra_degrees"], star["dec_degrees"]))
+        starPos = loc.at(t).observe(get_star(star["ra_degrees"], star["dec_degrees"]))
 
         alt, az, d = starPos.apparent().altaz()
 
