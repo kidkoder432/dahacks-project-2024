@@ -63,6 +63,11 @@ const ZoomableEarth = forwardRef((_, ref) => {
 });
 
 function App() {
+
+    const [photo, setPhoto] = useState(null);
+    const videoRef = useRef(null);
+    const canvasRef = useRef(null);
+
     const zoomableEarthRef = useRef();
     const [latLng, setLatLng] = useState(null);
     const [utcTime, setUtcTime] = useState(null);
@@ -140,6 +145,56 @@ function App() {
             setSelectedConstellation(randomConstellation.constellation);
         }
     };
+
+    // Start the video stream from the webcam
+    const startVideo = () => {
+    navigator.mediaDevices
+        .getUserMedia({ video: true })
+        .then((stream) => {
+            videoRef.current.srcObject = stream;
+        })
+        .catch((error) => {
+            console.error("Error accessing webcam:", error);
+        });
+    };
+    const takePhoto = () => {
+        const video = videoRef.current;
+        const canvas = canvasRef.current;
+    
+        if (video && canvas) {
+          const context = canvas.getContext("2d");
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    
+          // Convert canvas to image data and store it in state
+          setPhoto(canvas.toDataURL("image/png"));
+    
+          // Stop the video stream after taking the photo
+          const stream = video.srcObject;
+        const tracks = stream.getTracks();
+        tracks.forEach((track) => track.stop());
+    } else {
+        console.error("Video stream not started.");
+        }
+      };
+      const buttonStyle = {
+        backgroundColor: "yellow",
+        color: "black",
+        padding: "10px",
+        borderRadius: "5px",
+        textAlign: "center",
+        fontSize: "20px",
+        cursor: "pointer",
+        margin: "10px"
+      };
+
+      const imageStyle = {
+        width: "300px",
+        height: "auto",
+        borderRadius: "15px"  // Add curved edges to the image
+      };
+
 
     return (
         <>
@@ -334,7 +389,7 @@ function App() {
                             fontSize: "24px",
                         }}
                     >
-                        Random Constellation
+                         ✨Your lucky star ✨
                     </h2>
                     <div
                         style={{
@@ -348,6 +403,30 @@ function App() {
                     >
                         {selectedConstellation}
                     </div>
+                    <div style={{ textAlign: "center", marginTop: "10px" }}>
+
+      {!photo && (
+        <>
+          <video ref={videoRef} autoPlay style={{ width: "300px", height: "auto" }} />
+          <br />
+          <button onClick={startVideo} style={buttonStyle}>Turn on camera</button>
+          <button onClick={takePhoto} style={buttonStyle}>
+            Save this moment!
+          </button>
+        </>
+      )}
+      {photo && (
+        <>
+          <h2>Your Photo:</h2>
+          <img src={photo} alt="Captured" style={imageStyle} />
+          <br />
+          <button onClick={() => setPhoto(null)} style={buttonStyle}>Take Another Photo</button>
+          <a href={photo} download="captured_photo.png" style={buttonStyle}>Save Photo</a>
+        </>
+      )}
+      <canvas ref={canvasRef} style={{ display: "none" }} />
+    </div>
+                    
                 </div>
             )}
 
