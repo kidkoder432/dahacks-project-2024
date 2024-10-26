@@ -49,8 +49,11 @@ def receive_visible():
     lng = data.get("longitude")  # Extract longitude from the data
     timestamp = data.get("timestamp")  # Retrieve the timestamp (UTC)
 
+    planets = load("de421.bsp")  # Load the JPL ephemeris DE421
+    earth = planets["earth"]
+
     ts = load.timescale().utc(dateutil.parser.parse(timestamp))  # Create a timescale object with the given timestamp
-    loc = wgs84.latlon(lat * N, lng * W)  # Create a location object using the latitude and longitude
+    loc = earth + wgs84.latlon(lat * N, lng * W)  # Create a location object using the latitude and longitude
 
     visibleConstellations = []  # Initialize a list to store visible constellations
     print(f"Received coordinates: Latitude={lat}, Longitude={lng}, Time={timestamp}")  # Log the received coordinates and timestamp
@@ -72,7 +75,8 @@ def receive_visible():
     c = choice(visibleConstellations)  # Randomly select one of the visible constellations
 
     # Find the guide star with the minimum magnitude in the chosen constellation
-    guideStar = stars[stars["constellation"] == c].loc[stars["magnitude"].idxmin()]
+    df = stars[stars["constellation"] == c]
+    guideStar = df.loc[df["magnitude"].idxmin()]
 
     # Observe the guide star's position
     starPos = loc.at(ts).observe(get_star(guideStar["ra_degrees"], guideStar["dec_degrees"]))

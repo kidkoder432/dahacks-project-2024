@@ -68,7 +68,7 @@ function App() {
     const [utcTime, setUtcTime] = useState(null); // State to hold UTC time
     const [buttonVisible, setButtonVisible] = useState(true); // State to control button visibility
     const [error, setError] = useState(null); // State to hold error message
-
+    
     const getLocation = () => {
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
@@ -103,14 +103,16 @@ function App() {
     };
 
     // Function to handle "Stars in my area" button click
-    const handleStarsInMyArea = () => {
+    const handleStarsInMyArea = async () => {
         console.log("Fetching stars in your area!"); // Replace with your actual logic to fetch stars
         try {
-            const response = axios.post("http://127.0.0.1:5000/visible", {
+            const response = await axios.post("http://127.0.0.1:5000/visible", {
                 latitude: latLng.latitude,
                 longitude: latLng.longitude,
                 timestamp: utcTime,
             });
+
+            console.log(response)
 
             console.log("Stars fetched successfully:", response.data);
             console.log("Constellation:", response.data.constellation);
