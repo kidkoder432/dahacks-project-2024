@@ -7,3 +7,4 @@ def get_current_gps_coordinates():
         return g.latlng
     else:
         return None
+
