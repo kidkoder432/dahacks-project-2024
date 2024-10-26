@@ -72,29 +72,32 @@ def receive_visible():
         if alt.degrees > 45 and star["constellation"] not in visibleConstellations:
             visibleConstellations.append(star["constellation"])  # Add the constellation to the list
 
-    c = choice(visibleConstellations)  # Randomly select one of the visible constellations
+    consts = []
+    
+    for c in visibleConstellations:
+        # Find the guide star with the minimum magnitude in the chosen constellation
+        df = stars[stars["constellation"] == c]
+        guideStar = df.loc[df["magnitude"].idxmin()]
 
-    # Find the guide star with the minimum magnitude in the chosen constellation
-    df = stars[stars["constellation"] == c]
-    guideStar = df.loc[df["magnitude"].idxmin()]
+        # Observe the guide star's position
+        starPos = loc.at(ts).observe(get_star(guideStar["ra_degrees"], guideStar["dec_degrees"]))
 
-    # Observe the guide star's position
-    starPos = loc.at(ts).observe(get_star(guideStar["ra_degrees"], guideStar["dec_degrees"]))
+        # Get the altitude and azimuth of the guide star
+        alt, az, d = starPos.apparent().altaz()
 
-    # Get the altitude and azimuth of the guide star
-    alt, az, d = starPos.apparent().altaz()
+        # Return a JSON response with the visibility information
+        consts.append(
+            {
+                "message": "Visible constellations",  # Message indicating visible constellations
+                "constellation": c,  # Return the selected constellation
+                "magnitude": guideStar["magnitude"],  # Return the magnitude of the guide star
+                "alt": alt.degrees,  # Return the altitude in degrees
+                "az": az.degrees,  # Return the azimuth in degrees
+                "timestamp": timestamp,  # Return the UTC timestamp
+            }
+        )
 
-    # Return a JSON response with the visibility information
-    return jsonify(
-        {
-            "message": "Visible constellations",  # Message indicating visible constellations
-            "constellation": c,  # Return the selected constellation
-            "magnitude": guideStar["magnitude"],  # Return the magnitude of the guide star
-            "alt": alt.degrees,  # Return the altitude in degrees
-            "az": az.degrees,  # Return the azimuth in degrees
-            "timestamp": timestamp,  # Return the UTC timestamp
-        }
-    )
+    return jsonify(consts)
 
 # Main entry point for the application
 if __name__ == "__main__":
