@@ -71,7 +71,7 @@ function App() {
     const [utcTime, setUtcTime] = useState(null); // State to hold UTC time
     const [buttonVisible, setButtonVisible] = useState(true); // State to control button visibility
     const [error, setError] = useState(null); // State to hold error message
-    
+
     const getLocation = () => {
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
@@ -115,7 +115,7 @@ function App() {
                 timestamp: utcTime,
             });
 
-            console.log(response)
+            console.log(response);
 
             console.log("Stars fetched successfully:", response.data);
             console.log("Constellation:", response.data.constellation);
