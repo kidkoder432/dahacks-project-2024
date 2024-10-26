@@ -21,6 +21,7 @@ def get_star(ra, dec):
 app = Flask(__name__)
 CORS(app)  # Allow CORS requests from React frontend
 
+'''
 # Route to receive location data
 @app.route("/location", methods=["POST"])
 def receive_location():
@@ -40,7 +41,7 @@ def receive_location():
             "timestamp": timestamp,  # Return the UTC timestamp
         }
     )
-
+'''
 # Route to receive visibility data
 @app.route("/visible", methods=["POST"])
 def receive_visible():
