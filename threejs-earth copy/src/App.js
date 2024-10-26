@@ -195,6 +195,17 @@ function App() {
         borderRadius: "15px"  // Add curved edges to the image
       };
 
+      const handleFileUpload = (event) => {
+        const file = event.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            setPhoto(reader.result); // Set the uploaded file as the captured image
+          };
+          reader.readAsDataURL(file);
+        }
+      };
+
 
     return (
         <>
@@ -357,7 +368,7 @@ function App() {
                             fontSize: "16px",
                         }}
                     >
-                        Find my lucky Star 🥰
+                        Find my lucky Con. 🥰
                     </button>
                 </div>
             )}
@@ -389,7 +400,7 @@ function App() {
                             fontSize: "24px",
                         }}
                     >
-                         ✨Your lucky star ✨
+                         ✨Your lucky Con. ✨
                     </h2>
                     <div
                         style={{
@@ -413,6 +424,20 @@ function App() {
           <button onClick={takePhoto} style={buttonStyle}>
             Save this moment!
           </button>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleFileUpload}
+            style={{ 
+                marginTop: "20px",
+                backgroundColor: "yellow",
+                                color: "black",
+                                padding: "5px",
+                                borderRadius: "3px",
+                                textAlign: "center",
+                                fontSize: "14px",
+                                margin: "5px",}}
+          />
         </>
       )}
       {photo && (
