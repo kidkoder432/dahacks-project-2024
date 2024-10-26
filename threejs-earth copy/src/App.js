@@ -74,32 +74,41 @@ function App() {
 
     const getLocation = () => {
         if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    const lat = position.coords.latitude;
-                    let lng = position.coords.longitude;
+            navigator.permissions
+                .query({ name: "geolocation" })
+                .then((permissionStatus) => {
+                    navigator.geolocation.getCurrentPosition(
+                        (position) => {
+                            const lat = position.coords.latitude;
+                            let lng = position.coords.longitude;
 
-                    // Adjust the longitude for offset to the right (e.g., +3.5 degrees)
-                    lng += 3.5; // Change this value as needed to move the marker to the right
+                            // Adjust the longitude for offset to the right (e.g., +3.5 degrees)
+                            lng += 3.5; // Change this value as needed to move the marker to the right
 
-                    // Set the marker position in ZoomableEarth based on lat/lng
-                    const markerPosition = latLngToVector3(lat, lng, 5); // Adjust radius as necessary
+                            // Set the marker position in ZoomableEarth based on lat/lng
+                            const markerPosition = latLngToVector3(lat, lng, 5); // Adjust radius as necessary
 
-                    zoomableEarthRef.current.setMarkerPosition(markerPosition); // Update marker position
-                    zoomableEarthRef.current.zoomToLocation(lat, lng); // Zoom to new location
+                            zoomableEarthRef.current.setMarkerPosition(
+                                markerPosition
+                            ); // Update marker position
+                            zoomableEarthRef.current.zoomToLocation(lat, lng); // Zoom to new location
 
-                    // Set the latitude and longitude in state
-                    setLatLng({ latitude: lat, longitude: lng });
-                    setUtcTime(new Date().toUTCString()); // Get current UTC time
-                    setButtonVisible(false); // Hide the button
-                },
-                (error) => {
-                    console.error("Error obtaining location:", error);
-                    alert(
-                        "Unable to retrieve your location. Please allow location access."
+                            // Set the latitude and longitude in state
+                            setLatLng({ latitude: lat, longitude: lng });
+                            setUtcTime(new Date().toUTCString()); // Get current UTC time
+                            setButtonVisible(false); // Hide the button
+                        },
+                        (error) => {
+                            console.error("Error obtaining location:", error);
+                            alert(error.message);
+                        },
+                        {
+                            enableHighAccuracy: true,
+                            timeout: 5000,
+                            maximumAge: 0,
+                        }
                     );
-                }
-            );
+                });
         } else {
             alert("Geolocation is not supported by this browser.");
         }
