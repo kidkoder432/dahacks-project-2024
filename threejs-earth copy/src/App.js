@@ -129,7 +129,7 @@ function App() {
     function uploadPhoto(photo) {
         const formData = new FormData();
         formData.append("photo", photo);
-
+        formData.append("constellation", selectedConstellation);
         fetch("http://localhost:5000/upload-photo", {
             method: "POST",
             body: formData,

@@ -5,6 +5,7 @@ from flask_cors import CORS  # To handle Cross-Origin Resource Sharing
 import os
 
  # Importing Skyfield functions for astronomical calculations
+from matplotlib.layout_engine import ConstrainedLayoutEngine
 from skyfield.api import load, N, W, wgs84, Star, Angle 
 
 import pandas as pd  # For data manipulation and analysis
@@ -112,14 +113,19 @@ def upload_photo():
     
     file = request.files['photo']
 
+    constellation = request.form.get('constellation')
     file.filename += '.jpg'    
     # Save or process the file
     if file and allowed_file(file.filename):  # Optionally, validate file type
         file.save(os.path.join("uploads", file.filename))  # Save file if needed
         # Process the image as needed here, e.g., with OpenCV or PIL
 
+        match = True
+        print()
         # Return success message or analysis results
-        return jsonify({"message": "File uploaded successfully"})
+        return jsonify({
+            "message": "File uploaded successfully", 
+            "matched_constellation": match})
     else:
         return jsonify({"error": "Invalid file"}), 400
 
