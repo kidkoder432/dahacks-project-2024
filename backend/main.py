@@ -1,5 +1,4 @@
 # Import necessary libraries
-import dateutil.parser  # For parsing date and time strings
 from flask import Flask, request, jsonify  # Flask for creating the web app and handling requests
 from flask_cors import CORS  # To handle Cross-Origin Resource Sharing
 
