@@ -64,10 +64,12 @@ const ZoomableEarth = forwardRef((_, ref) => {
 
 function App() {
     const zoomableEarthRef = useRef();
-    const [latLng, setLatLng] = useState(null); // State to hold latitude and longitude
-    const [utcTime, setUtcTime] = useState(null); // State to hold UTC time
-    const [buttonVisible, setButtonVisible] = useState(true); // State to control button visibility
-    const [error, setError] = useState(null); // State to hold error message
+    const [latLng, setLatLng] = useState(null);
+    const [utcTime, setUtcTime] = useState(null);
+    const [buttonVisible, setButtonVisible] = useState(true);
+    const [error, setError] = useState(null);
+    const [constellations, setConstellations] = useState([]);
+    const [selectedConstellation, setSelectedConstellation] = useState(null);
 
     const getLocation = () => {
         if (navigator.geolocation) {
@@ -120,8 +122,6 @@ function App() {
                 longitude: latLng.longitude,
                 timestamp: utcTime,
             });
-
-            console.log(response);
 
             console.log("Stars fetched successfully:", response.data);
 
