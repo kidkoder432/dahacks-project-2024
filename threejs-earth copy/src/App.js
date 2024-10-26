@@ -12,6 +12,9 @@ import * as THREE from "three";
 
 import axios from "axios";
 // Marker component
+
+const PORT = "http://192.168.174.82:5000";
+
 const Marker = ({ position }) => {
     return (
         <mesh position={position}>
@@ -106,7 +109,7 @@ function App() {
     const handleStarsInMyArea = async () => {
         console.log("Fetching stars in your area!"); // Replace with your actual logic to fetch stars
         try {
-            const response = await axios.post("http://127.0.0.1:5000/visible", {
+            const response = await axios.post(PORT + "/visible", {
                 latitude: latLng.latitude,
                 longitude: latLng.longitude,
                 timestamp: utcTime,
