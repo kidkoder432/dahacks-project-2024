@@ -24,7 +24,83 @@ def get_star(ra, dec):
 app = Flask(__name__)
 CORS(app)  # Allow CORS requests from React frontend
 
-'''
+```import cv2
+import numpy as np
+from scipy.spatial import KDTree
+from astroquery.vizier import Vizier
+from astropy.coordinates import SkyCoord
+from astropy import units as u
+
+def preprocess_image(image_path):
+    # Load image
+    image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
+    
+    # Apply Gaussian Blur to reduce noise
+    blurred = cv2.GaussianBlur(image, (5, 5), 0)
+    
+    # Threshold to isolate bright spots (stars)
+    _, thresholded = cv2.threshold(blurred, 200, 255, cv2.THRESH_BINARY)
+    
+    # Find contours (stars) in thresholded image
+    contours, _ = cv2.findContours(thresholded, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    
+    # Get star coordinates
+    stars = []
+    for cnt in contours:
+        if cv2.contourArea(cnt) > 5:  # Ignore small noise
+            (x, y), _ = cv2.minEnclosingCircle(cnt)
+            stars.append((int(x), int(y)))
+    
+    return stars
+
+def load_known_constellations():
+    # Load star data for known constellations
+    v = Vizier(columns=["RAJ2000", "DEJ2000", "Constellation"])
+    result = v.query_object("Polaris", catalog="I/239/hip_main")
+    
+    constellation_stars = {}
+    for star in result[0]:
+        ra = star["RAJ2000"]
+        dec = star["DEJ2000"]
+        constellation = star["Constellation"]
+        
+        if constellation not in constellation_stars:
+            constellation_stars[constellation] = []
+        
+        constellation_stars[constellation].append((ra, dec))
+        
+    return constellation_stars
+
+def match_constellation(stars, constellation_data, threshold=0.05):
+    # Check if stars match any known constellation
+    star_tree = KDTree(stars)
+    matched_constellation = None
+    min_distance = float("inf")
+    
+    for constellation, known_stars in constellation_data.items():
+        known_tree = KDTree(known_stars)
+        distance, _ = star_tree.query(known_tree.data)
+        avg_distance = np.mean(distance)
+        
+        if avg_distance < min_distance and avg_distance < threshold:
+            min_distance = avg_distance
+            matched_constellation = constellation
+    
+    return matched_constellation
+
+def analyze_constellation(image_path):
+    stars = preprocess_image(image_path)
+    constellation_data = load_known_constellations()
+    matched_constellation = match_constellation(stars, constellation_data)
+    
+    if matched_constellation:
+        print(f"Constellation identified: {matched_constellation}")
+        return matched_constellation
+    else:
+        print("No known constellation matched.")
+        return None
+
+
 # Route to receive location data
 @app.route("/location", methods=["POST"])
 def receive_location():
@@ -44,7 +120,7 @@ def receive_location():
             "timestamp": timestamp,  # Return the UTC timestamp
         }
     )
-'''
+
 # Route to receive visibility data
 @app.route("/visible", methods=["POST"])
 def receive_visible():
@@ -120,7 +196,12 @@ def upload_photo():
         file.save(os.path.join("uploads", file.filename))  # Save file if needed
         # Process the image as needed here, e.g., with OpenCV or PIL
 
-        match = True
+        path = "./uploads/blob.jpg"
+        result = analyze_constellation(path)
+        if result is None:
+            match = False
+        else:
+            match = (result == constellation)
         print()
         # Return success message or analysis results
         return jsonify({
@@ -135,3 +216,5 @@ def upload_photo():
 if __name__ == "__main__":
     stars = pd.read_csv("stars.csv")  # Load the star data again before starting the app
     app.run(debug=True, ssl_context='adhoc')  # Run the Flask app in debug mode
+
+
