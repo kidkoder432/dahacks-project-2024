@@ -8,7 +8,7 @@ import React, {
 
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { OrbitControls, Stars } from "@react-three/drei";
-import Earth, { latLngToVector3 } from "./Earth"; 
+import Earth, { latLngToVector3 } from "./Earth";
 import * as THREE from "three";
 
 import axios from "axios";
@@ -62,8 +62,16 @@ const ZoomableEarth = forwardRef((_, ref) => {
     );
 });
 
-function App() {
+function dataURLtoBlob(dataurl) {
+    var arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1],
+        bstr = atob(arr[1]), n = bstr.length, u8arr = new Uint8Array(n);
+    while(n--){
+        u8arr[n] = bstr.charCodeAt(n);
+    }
+    return new Blob([u8arr], {type:mime});
+}
 
+function App() {
     const [photo, setPhoto] = useState(null);
     const videoRef = useRef(null);
     const canvasRef = useRef(null);
@@ -86,16 +94,16 @@ function App() {
                             const lat = position.coords.latitude;
                             let lng = position.coords.longitude;
 
-                                    lng += 3.5;
+                            lng += 3.5;
 
-                                    const markerPosition = latLngToVector3(lat, lng, 5);
+                            const markerPosition = latLngToVector3(lat, lng, 5);
 
                             zoomableEarthRef.current.setMarkerPosition(
                                 markerPosition
                             );
                             zoomableEarthRef.current.zoomToLocation(lat, lng);
 
-                                    setLatLng({ latitude: lat, longitude: lng });
+                            setLatLng({ latitude: lat, longitude: lng });
                             setUtcTime(new Date().toUTCString());
                             setButtonVisible(false);
                         },
@@ -116,8 +124,20 @@ function App() {
     };
     const zoomies = () => {
         zoomableEarthRef.current.zoomToLocation(0, 0);
+    };
+
+    function uploadPhoto(photo) {
+        const formData = new FormData();
+        formData.append("photo", photo);
+        formData.append("constellation", selectedConstellation);
+        fetch("http://localhost:5000/upload-photo", {
+            method: "POST",
+            body: formData,
+        })
+            .then((response) => response.json())
+            .then((data) => console.log(data))
+            .catch((error) => console.error("Error:", error));
     }
-    
 
     const handleStarsInMyArea = async () => {
         console.log("Fetching stars in your area!");
@@ -148,37 +168,38 @@ function App() {
 
     // Start the video stream from the webcam
     const startVideo = () => {
-    navigator.mediaDevices
-        .getUserMedia({ video: true })
-        .then((stream) => {
-            videoRef.current.srcObject = stream;
-        })
-        .catch((error) => {
-            console.error("Error accessing webcam:", error);
-        });
+        navigator.mediaDevices
+            .getUserMedia({ video: true })
+            .then((stream) => {
+                videoRef.current.srcObject = stream;
+            })
+            .catch((error) => {
+                console.error("Error accessing webcam:", error);
+            });
     };
     const takePhoto = () => {
         const video = videoRef.current;
         const canvas = canvasRef.current;
-    
+
         if (video && canvas) {
-          const context = canvas.getContext("2d");
-          canvas.width = video.videoWidth;
-          canvas.height = video.videoHeight;
-          context.drawImage(video, 0, 0, canvas.width, canvas.height);
-    
-          // Convert canvas to image data and store it in state
-          setPhoto(canvas.toDataURL("image/png"));
-    
-          // Stop the video stream after taking the photo
-          const stream = video.srcObject;
-        const tracks = stream.getTracks();
-        tracks.forEach((track) => track.stop());
-    } else {
-        console.error("Video stream not started.");
+            const context = canvas.getContext("2d");
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            // Convert canvas to image data and store it in state
+            setPhoto(canvas.toDataURL("image/png"));
+
+            uploadPhoto(dataURLtoBlob(canvas.toDataURL("image/png")));
+            // Stop the video stream after taking the photo
+            const stream = video.srcObject;
+            const tracks = stream.getTracks();
+            tracks.forEach((track) => track.stop());
+        } else {
+            console.error("Video stream not started.");
         }
-      };
-      const buttonStyle = {
+    };
+    const buttonStyle = {
         backgroundColor: "yellow",
         color: "black",
         padding: "10px",
@@ -186,14 +207,14 @@ function App() {
         textAlign: "center",
         fontSize: "20px",
         cursor: "pointer",
-        margin: "10px"
-      };
+        margin: "10px",
+    };
 
-      const imageStyle = {
+    const imageStyle = {
         width: "300px",
         height: "auto",
-        borderRadius: "15px"  // Add curved edges to the image
-      };
+        borderRadius: "15px", // Add curved edges to the image
+    };
 
       const handleFileUpload = (event) => {
         const file = event.target.files[0];
@@ -355,7 +376,6 @@ function App() {
 
                     <button
                         onClick={handleSendLocation}
-                        
                         style={{
                             border: "none",
                             borderRadius: "5px",
@@ -415,43 +435,51 @@ function App() {
                         {selectedConstellation}
                     </div>
                     <div style={{ textAlign: "center", marginTop: "10px" }}>
-
-      {!photo && (
-        <>
-          <video ref={videoRef} autoPlay style={{ width: "300px", height: "auto" }} />
-          <br />
-          <button onClick={startVideo} style={buttonStyle}>Turn on camera</button>
-          <button onClick={takePhoto} style={buttonStyle}>
-            Save this moment!
-          </button>
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleFileUpload}
-            style={{ 
-                marginTop: "20px",
-                backgroundColor: "yellow",
-                                color: "black",
-                                padding: "5px",
-                                borderRadius: "3px",
-                                textAlign: "center",
-                                fontSize: "14px",
-                                margin: "5px",}}
-          />
-        </>
-      )}
-      {photo && (
-        <>
-          <h2>Your Photo:</h2>
-          <img src={photo} alt="Captured" style={imageStyle} />
-          <br />
-          <button onClick={() => setPhoto(null)} style={buttonStyle}>Take Another Photo</button>
-          <a href={photo} download="captured_photo.png" style={buttonStyle}>Save Photo</a>
-        </>
-      )}
-      <canvas ref={canvasRef} style={{ display: "none" }} />
-    </div>
-                    
+                        {!photo && (
+                            <>
+                                <video
+                                    ref={videoRef}
+                                    autoPlay
+                                    style={{ width: "300px", height: "auto" }}
+                                />
+                                <br />
+                                <button
+                                    onClick={startVideo}
+                                    style={buttonStyle}
+                                >
+                                    Turn on camera
+                                </button>
+                                <button onClick={takePhoto} style={buttonStyle}>
+                                    Save this moment!
+                                </button>
+                            </>
+                        )}
+                        {photo && (
+                            <>
+                                <h2>Your Photo:</h2>
+                                <img
+                                    src={photo}
+                                    alt="Captured"
+                                    style={imageStyle}
+                                />
+                                <br />
+                                <button
+                                    onClick={() => setPhoto(null)}
+                                    style={buttonStyle}
+                                >
+                                    Take Another Photo
+                                </button>
+                                <a
+                                    href={photo}
+                                    download="captured_photo.png"
+                                    style={buttonStyle}
+                                >
+                                    Save Photo
+                                </a>
+                            </>
+                        )}
+                        <canvas ref={canvasRef} style={{ display: "none" }} />
+                    </div>
                 </div>
             )}
 

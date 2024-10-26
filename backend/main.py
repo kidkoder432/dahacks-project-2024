@@ -2,7 +2,10 @@
 from flask import Flask, request, jsonify  # Flask for creating the web app and handling requests
 from flask_cors import CORS  # To handle Cross-Origin Resource Sharing
 
+import os
+
  # Importing Skyfield functions for astronomical calculations
+from matplotlib.layout_engine import ConstrainedLayoutEngine
 from skyfield.api import load, N, W, wgs84, Star, Angle 
 
 import pandas as pd  # For data manipulation and analysis
