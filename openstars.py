@@ -1,6 +1,8 @@
 import pandas as pd
 import geocoder
-from skyfield.api import load, N, W, wgs84, Star, Angle
+from skyfield.api import load, N, E, wgs84, Star, Angle
+
+from random import choice
 
 
 def get_current_gps_coordinates():
@@ -33,8 +35,11 @@ earth = planets["earth"]
 
 lat, lng = get_current_gps_coordinates()
 
-loc = earth + wgs84.latlon(lat * N, lng * W)
+loc = earth + wgs84.latlon(lat * N, lng * E)
 
+print(loc)
+print(lat, lng)
+print(t)
 
 visibleConstellations = []
 
@@ -47,29 +52,21 @@ for star in df.iterrows():
     if alt.degrees > 45 and star["constellation"] not in visibleConstellations:
         visibleConstellations.append(star["constellation"])
 
-print(visibleConstellations)
+# print(visibleConstellations)
 
-star_ra = df.loc[50, "ra_degrees"]
-star_dec = df.loc[50, "dec_degrees"]
+c = choice(visibleConstellations)
 
-print(star_ra, star_dec)
+constellationStarDf = df[df["constellation"] == c]
+# Find the guide star with the minimum magnitude in the chosen constellation
+guideStar = constellationStarDf.loc[constellationStarDf["magnitude"].idxmin()]
 
-star = Star(ra=Angle(degrees=star_ra), dec=Angle(degrees=star_dec))
+print(guideStar["ra_degrees"], guideStar["dec_degrees"])
 
+# Observe the guide star's position
+starPos = loc.at(t).observe(get_star(guideStar["ra_degrees"], guideStar["dec_degrees"]))
 
-starPos = loc.at(t).observe(star)
-
+# Get the altitude and azimuth of the guide star
 alt, az, d = starPos.apparent().altaz()
-
-print("Altitude:", alt)
-print("Azimuth:", az)
-print("constellation: " + df.loc[50, "constellation"])
-
-if alt.degrees > 45:
-    print(
-        f"The constellation {df.loc[50, 'constellation']} is currently visible in the sky!"
-    )
-else:
-    print(
-        f"The constellation {df.loc[50, 'constellation']} is not currently visible in the sky."
-    )
+print(
+    f"Constellation: {c}, Altitude: {alt}, Azimuth: {az} is visible in the sky!"
+)
