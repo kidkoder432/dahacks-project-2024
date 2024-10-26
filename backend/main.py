@@ -2,10 +2,7 @@
 from flask import Flask, request, jsonify  # Flask for creating the web app and handling requests
 from flask_cors import CORS  # To handle Cross-Origin Resource Sharing
 
-import os
-
  # Importing Skyfield functions for astronomical calculations
-from matplotlib.layout_engine import ConstrainedLayoutEngine
 from skyfield.api import load, N, W, wgs84, Star, Angle 
 
 import pandas as pd  # For data manipulation and analysis
@@ -103,35 +100,7 @@ def receive_visible():
 
     return jsonify(consts)
 
-def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in {'jpg', 'jpeg', 'png'}
-
-@app.route('/upload-photo', methods=['POST'])
-def upload_photo():
-    if 'photo' not in request.files:
-        return jsonify({"error": "No file part"}), 400
-    
-    file = request.files['photo']
-
-    constellation = request.form.get('constellation')
-    file.filename += '.jpg'    
-    # Save or process the file
-    if file and allowed_file(file.filename):  # Optionally, validate file type
-        file.save(os.path.join("uploads", file.filename))  # Save file if needed
-        # Process the image as needed here, e.g., with OpenCV or PIL
-
-        match = True
-        print()
-        # Return success message or analysis results
-        return jsonify({
-            "message": "File uploaded successfully", 
-            "matched_constellation": match})
-    else:
-        return jsonify({"error": "Invalid file"}), 400
-
-
-
 # Main entry point for the application
 if __name__ == "__main__":
     stars = pd.read_csv("stars.csv")  # Load the star data again before starting the app
-    app.run(debug=True, ssl_context='adhoc')  # Run the Flask app in debug mode
+    app.run(debug=True)  # Run the Flask app in debug mode
