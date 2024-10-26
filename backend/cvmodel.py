@@ -99,7 +99,7 @@ def iterateArea(contours, lines=[], iterate=False):
     sorted_area = []
     for i in reversed(sorted(coordinates.keys())):
         sorted_area.append(i)
-
+    # print(sorted_area)
     # Creating coordinates for each star in the costellation
     x = []
     y = []
@@ -107,7 +107,7 @@ def iterateArea(contours, lines=[], iterate=False):
         x.append(coordinates[area][0])
         y.append(coordinates[area][1])
 
-    threshold = min(150, sorted_area[2])
+    threshold = min(150, sorted_area[1])
     # print(sorted_area)
     count = 0
     for area in sorted_area:
@@ -116,15 +116,17 @@ def iterateArea(contours, lines=[], iterate=False):
 
     coordinates_list = []
     # print(count)
-    if iterate == False:
+    if not iterate:
+        print("end iterateFalse")
         return getNormalisedCoordinates(x, y, 0, 1, lines)
     else:
         for i in range(count):
             for j in range(i + 1, count):
                 x_new, y_new, _ = getNormalisedCoordinates(x[i:], y[i:], i, j, lines)
                 coordinates_list.append((x_new, y_new))
-
+        print("end")
         return coordinates_list
+
 
 
 # Finding edges using Canny edge detection
@@ -187,35 +189,40 @@ def getRedChannel(img):
 
 
 def makeTemplates():
-    # Directory where the templates are stoed
+    # Directory where the templates are stored
     template_directory = "./Templates"
     templates_coordinates = {}
 
     # Iterate through each file in the template directory to process one template at a time
     for filename in os.listdir(template_directory):
         # for filename in ["Hercules.png"]:
-        # print(filename)
+        print(filename)
 
         # Reading the template
         img = cv2.imread("./Templates/" + filename)
-        # cv2.imshow('original' ,img)
+        cv2.imshow('original' ,img)
         red_channel = getRedChannel(img)
         # plotImage(red_channel, "red")
         thresh = binariseImage(red_channel, [165.75, 191.25])
-
+        # plotImage(thresh[0], "thresh1")
+        # plotImage(thresh[1], "thresh2")
         blue_channel = getBlueChannel(img)
 
         thresh2 = binariseImage(red_channel, [125.75, 255])
+        # plotImage(thresh2[0], "thresh3")
+        # plotImage(thresh2[1], "thresh4")
+        # plotImage(blue_channel, "blue")
         letters = thresh2[0] - thresh2[1]
+        # plotImage(letters, "letters")
         new_blue = blue_channel + letters
-
+        # plotImage(new_blue, "newblue")
         for i in range(len(new_blue)):
             for j in range(len(new_blue[i])):
                 if new_blue[i][j][2] != 0:
                     new_blue[i][j][1] = 0
                     new_blue[i][j][0] = 0
                     new_blue[i][j][2] = 0
-
+        # plotImage(new_blue, "newblue2")
         # Subtracting to get only stars
         final = thresh[0] - thresh[1]
         # plotImage(final, "final")
@@ -270,7 +277,7 @@ def makeTemplates():
 
         x, y, normalised_lines = iterateArea(final_contours, drawn_lines)
 
-        templates_coordinates[filename[:-4]] = (x, y, len(final_contours), normalised_lines)
+        templates_coordinates[filename[:-4]] = [x, y, len(final_contours), normalised_lines]
 
         # Plot the normalised stars or save them
         plt.figure("Normalised " + filename[:-4] + " stars")
@@ -278,11 +285,11 @@ def makeTemplates():
         for line in normalised_lines:
             for x1, y1, x2, y2 in line:
                 plt.plot([x1, x2], [y1, y2], color='red')
+        plt.savefig("./Normalised_Templates/" + filename)
+        plt.close()
+        plt.show()
 
-    # plt.savefig("./Normalised_Templates/" + filename)
-    # plt.close()
-    # plt.show()
-
+    print("makeTemplateEnd")
     # Return the normalised coordinates
     # return x, y
 
@@ -290,10 +297,9 @@ def makeTemplates():
     with open("Template Coordinates", "wb") as fp:
         pickle.dump(templates_coordinates, fp)
 
-
 def test_normaliser(test_path):
     # Process and find the normalised coordinate for each template present in the Templates directory
-    # makeTemplates()
+    makeTemplates()
 
     img = cv2.imread(test_path)
     img = getGrayscale(img)
@@ -305,8 +311,8 @@ def test_normaliser(test_path):
     final = thresh[0]
     plotImage(final, "final")
     # cv2.imwrite("./final.png", final)
-    stars = applyMedian(final, 5)
-    # plotImage(stars, "stars")
+    stars = applyMedian(final, 3)
+    plotImage(stars, "stars")
 
     # stars_grey = getGrayscale(stars)
     # final_stars = binariseImage(stars, [70])
@@ -326,7 +332,7 @@ def test_normaliser(test_path):
         if area != 0:
             final_contours.append(contour)
 
-    # print("Number of Contours found = " + str(len(final_contours)))
+    print("Number of Contours found = " + str(len(final_contours)))
 
     coordinates_list = iterateArea(final_contours, [], True)
     # print(coordinates_list)
@@ -416,21 +422,28 @@ def simillarity_error(train, test):
 
 def test_runner(constellation):
     test_coordinates = test_normaliser('test_data/' + constellation + '.png')
-    true_label = constellation[:]
-    # print(len(test_coordinates))
 
+    true_label = constellation[:]
+    starNum = len(test_coordinates[0][0])
+    print(starNum)
     file = open('Template Coordinates', 'rb')
     template_coordinate = pickle.load(file)
-
+    x_template, y_template, n_stars, normalised_lines = template_coordinate[constellation]
+    # print(n_stars)
+    print(template_coordinate[constellation])
     score = -1
     pred_label = 'None'
 
     plot_points = []
+    int x, y, n
 
     for bright_perm in range(len(test_coordinates)):
         for constellation in template_coordinate:
             x_template, y_template, n_stars, normalised_lines = template_coordinate[constellation]
-
+            x = x_template
+            y = y_template
+            n = n_stars
+            l = normalised_lines
             e = simillarity_error((x_template, y_template), test_coordinates[bright_perm])
             # score(x_test , y_test , x_template , y_template)
             cur_score = e[0] * (e[0] - 2) / (n_stars * e[1])
@@ -442,6 +455,8 @@ def test_runner(constellation):
                 score = cur_score
 
                 plot_points = (x_template, y_template, test_coordinates, normalised_lines)
+    if len(plot_points) == 0:
+        plot_points = (x, y, n, l)
 
     plt.figure('Matched ' + true_label + " " + pred_label)
     plt.scatter(plot_points[0], plot_points[1])
@@ -456,16 +471,17 @@ def test_runner(constellation):
     return pred_label
 
 if __name__ == "__main__":
-    # makeTemplates()
-    d = ['Andromeda', 'Aquila', 'Auriga', 'CanisMajor', 'Capricornus', 'Cetus', 'Columba', 'Gemini', 'Grus', 'Leo',
-         'Orion', 'Pavo', 'Pegasus', 'Phoenix', 'Pisces', 'PiscisAustrinus', 'Puppis', 'UrsaMajor', 'UrsaMinor', 'Vela']
+    #makeTemplates()
+    # d = ['Andromeda', 'Aquila', 'Auriga', 'CanisMajor', 'Capricornus', 'Cetus', 'Columba', 'Gemini', 'Grus', 'Leo','Orion', 'Pavo', 'Pegasus', 'Phoenix', 'Pisces', 'PiscisAustrinus', 'Puppis', 'UrsaMajor', 'UrsaMinor', 'Vela']
+    d = ['UrsaMajor']
     count = 0
     for i in d:
         pred = test_runner(i)
         if (pred == i):
             count += 1
         else:
-            print(i, pred)
+            print(f"prediction {i}: ")
+            print(pred)
     print(count / len(d))
     cv2.waitKey(0)
 # test_runner('t')
