@@ -299,7 +299,7 @@ def makeTemplates():
 
 def test_normaliser(test_path):
     # Process and find the normalised coordinate for each template present in the Templates directory
-    makeTemplates()
+    #makeTemplates()
 
     img = cv2.imread(test_path)
     img = getGrayscale(img)
@@ -421,29 +421,25 @@ def simillarity_error(train, test):
 
 
 def test_runner(constellation):
+    #print(constellation)
     test_coordinates = test_normaliser('test_data/' + constellation + '.png')
 
     true_label = constellation[:]
     starNum = len(test_coordinates[0][0])
-    print(starNum)
+    #print(starNum)
     file = open('Template Coordinates', 'rb')
     template_coordinate = pickle.load(file)
     x_template, y_template, n_stars, normalised_lines = template_coordinate[constellation]
     # print(n_stars)
-    print(template_coordinate[constellation])
+    # print(template_coordinate[constellation])
     score = -1
     pred_label = 'None'
 
     plot_points = []
-    int x, y, n
 
     for bright_perm in range(len(test_coordinates)):
         for constellation in template_coordinate:
             x_template, y_template, n_stars, normalised_lines = template_coordinate[constellation]
-            x = x_template
-            y = y_template
-            n = n_stars
-            l = normalised_lines
             e = simillarity_error((x_template, y_template), test_coordinates[bright_perm])
             # score(x_test , y_test , x_template , y_template)
             cur_score = e[0] * (e[0] - 2) / (n_stars * e[1])
@@ -455,8 +451,6 @@ def test_runner(constellation):
                 score = cur_score
 
                 plot_points = (x_template, y_template, test_coordinates, normalised_lines)
-    if len(plot_points) == 0:
-        plot_points = (x, y, n, l)
 
     plt.figure('Matched ' + true_label + " " + pred_label)
     plt.scatter(plot_points[0], plot_points[1])
@@ -470,17 +464,42 @@ def test_runner(constellation):
     # print('--------------------'*2 , '\n' , score , pred_label)
     return pred_label
 
+def test_runner(path):
+    #print(constellation)
+    test_coordinates = test_normaliser(path)
+
+    score = -1
+    pred_label = 'None'
+
+    plot_points = []
+
+    for bright_perm in range(len(test_coordinates)):
+        for constellation in template_coordinate:
+            x_template, y_template, n_stars, normalised_lines = template_coordinate[constellation]
+            e = simillarity_error((x_template, y_template), test_coordinates[bright_perm])
+            # score(x_test , y_test , x_template , y_template)
+            cur_score = e[0] * (e[0] - 2) / (n_stars * e[1])
+            # cur_score = np.exp(e[0] / n_stars) * (e[0]-2) / e[1]
+            # print(constellation , e , n_stars , cur_score)
+
+            if e[0] > 2 and score < cur_score < 1e+3:
+                pred_label = constellation
+                score = cur_score
+
+    # print('--------------------'*2 , '\n' , score , pred_label)
+    return pred_label
+
+
 if __name__ == "__main__":
-    #makeTemplates()
-    # d = ['Andromeda', 'Aquila', 'Auriga', 'CanisMajor', 'Capricornus', 'Cetus', 'Columba', 'Gemini', 'Grus', 'Leo','Orion', 'Pavo', 'Pegasus', 'Phoenix', 'Pisces', 'PiscisAustrinus', 'Puppis', 'UrsaMajor', 'UrsaMinor', 'Vela']
-    d = ['UrsaMajor']
+    # makeTemplates()
+    d = ['Andromeda', 'Aquila', 'Auriga', 'CanisMajor', 'Capricornus', 'Cetus', 'Columba', 'Gemini', 'Grus', 'Leo','Orion', 'Pavo', 'Pegasus', 'Phoenix', 'Pisces', 'PiscisAustrinus', 'Puppis', 'UrsaMajor', 'UrsaMinor', 'Vela']
+    # d = ['UrsaMajor']
     count = 0
     for i in d:
         pred = test_runner(i)
         if (pred == i):
             count += 1
         else:
-            print(f"prediction {i}: ")
             print(pred)
     print(count / len(d))
     cv2.waitKey(0)
