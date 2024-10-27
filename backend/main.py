@@ -4,10 +4,11 @@ from flask_cors import CORS  # To handle Cross-Origin Resource Sharing
 
 import os
 
+from httpx import ConnectError
+
 import cvmodel
 
  # Importing Skyfield functions for astronomical calculations
-from matplotlib.layout_engine import ConstrainedLayoutEngine
 from skyfield.api import load, N, W, wgs84, Star, Angle 
 
 import pandas as pd  # For data manipulation and analysis
@@ -123,12 +124,12 @@ def upload_photo():
         # Process the image as needed here, e.g., with OpenCV or PIL
 
         path = "./uploads/blob.jpg"
-        result = cvmodel.test_runner(path)
+        result = cvmodel.test_runner_2(path)
         if result is None:
             match = False
         else:
             match = (result == constellation)
-        print()
+        print(result, constellation, match)
         # Return success message or analysis results
         return jsonify({
             "message": "File uploaded successfully", 

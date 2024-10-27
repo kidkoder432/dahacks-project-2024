@@ -464,18 +464,22 @@ def test_runner(constellation):
     # print('--------------------'*2 , '\n' , score , pred_label)
     return pred_label
 
-def test_runner(path):
+def test_runner_2(path):
     #print(constellation)
     test_coordinates = test_normaliser(path)
+
+    file = open('Template Coordinates', 'rb')
+    template_coordinate = pickle.load(file)
 
     score = -1
     pred_label = 'None'
 
     plot_points = []
 
-    for bright_perm in range(len(test_coordinates)):
+    for bright_perm, _ in enumerate(test_coordinates):
         for constellation in template_coordinate:
-            x_template, y_template, n_stars, normalised_lines = template_coordinate[constellation]
+            print(constellation)
+            x_template, y_template, n_stars, _ = template_coordinate[constellation]
             e = simillarity_error((x_template, y_template), test_coordinates[bright_perm])
             # score(x_test , y_test , x_template , y_template)
             cur_score = e[0] * (e[0] - 2) / (n_stars * e[1])
